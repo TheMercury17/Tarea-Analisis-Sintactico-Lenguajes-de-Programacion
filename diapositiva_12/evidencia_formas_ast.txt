@@ -1,0 +1,317 @@
+================================================================================
+  ANÁLISIS COMPARATIVO CST vs FORMAS DE AST PARA: '3 + 4 * 5'
+  Diapositiva 12/42 - Lenguajes de Programación
+  Grupo 5: Andrés Sebastián Coral Vallejo y Carol Arenas Cardona
+================================================================================
+
+[1] PARSE TREE (Árbol Sintáctico Concreto - CST) tal como en Diapositiva 12:
+-------------------------------------------------------------------------
+Conserva la totalidad de pasos de derivación de la gramática (E -> T -> F):
+└── program
+    └── expr
+        ├── expr
+        │   └── term
+        │       └── factor
+        │           └── Terminal: '3'
+        ├── Terminal: '+'
+        └── term
+            ├── term
+            │   └── factor
+            │       └── Terminal: '4'
+            ├── Terminal: '*'
+            └── factor
+                └── Terminal: '5'
+-> Total de nodos en el Parse Tree (CST): 15 nodos
+
+================================================================================
+[2] DIFERENTES FORMAS DE REPRESENTACIÓN DEL AST:
+================================================================================
+
+>>> FORMA 1: AST Jerárquico Orientado a Objetos (Visual 2D / Clases)
+    Los operadores son nodos internos; los operandos son nodos hoja.
+    Se eliminan nodos de paso intermediarios (E, T, F) y puntuación innecesaria.
+└── Op(+)
+    ├── Num(3)
+    └── Op(*)
+        ├── Num(4)
+        └── Num(5)
+    -> Total de nodos en el AST: 5 nodos (Reducción del 66.7%)
+    -> Evaluación semántica del AST: 23
+
+>>> FORMA 2: AST en Notación Prefija / S-Expressions (Estilo Lisp) y Tuplas
+    Formato clásico en lenguajes funcionales e intérpretes teóricos:
+    - S-Expression : (+ 3 (* 4 5))
+    - Tuplas Python: ('+', 3, ('*', 4, 5))
+
+>>> FORMA 3: AST Estructurado en Diccionario / JSON (Estándar ESTree / Linters)
+    Estructura serializable utilizada en herramientas modernas de análisis estático:
+{
+  "type": "BinaryExpression",
+  "operator": "+",
+  "left": {
+    "type": "Literal",
+    "value": 3
+  },
+  "right": {
+    "type": "BinaryExpression",
+    "operator": "*",
+    "left": {
+      "type": "Literal",
+      "value": 4
+    },
+    "right": {
+      "type": "Literal",
+      "value": 5
+    }
+  }
+}
+
+>>> FORMA 4: AST N-Ario Compactado (Operadores homogéneos agrupados)
+    Representación en la que operaciones encadenadas se aplanan en un solo nodo:
+    - S-Expression N-Aria: (+ 3 (* 4 5))
+    - Árbol N-Ario:
+└── NaryOp(+)
+    ├── Num(3)
+    └── NaryOp(*)
+        ├── Num(4)
+        └── Num(5)
+
+>>> FORMA 5: AST Nativo del compilador de Python (Módulo 'ast')
+    Representación que genera internamente CPython al compilar la misma expresión:
+    - ast.dump() estructurado:
+    Expression(
+  body=BinOp(
+    left=Constant(value=3),
+    op=Add(),
+    right=BinOp(
+      left=Constant(value=4),
+      op=Mult(),
+      right=Constant(value=5))))
+
+################################################################################
+
+================================================================================
+  ANÁLISIS COMPARATIVO CST vs FORMAS DE AST PARA: '2 + 3 * (4 - 5)'
+  Diapositiva 12/42 - Lenguajes de Programación
+  Grupo 5: Andrés Sebastián Coral Vallejo y Carol Arenas Cardona
+================================================================================
+
+[1] PARSE TREE (Árbol Sintáctico Concreto - CST) tal como en Diapositiva 12:
+-------------------------------------------------------------------------
+Conserva la totalidad de pasos de derivación de la gramática (E -> T -> F):
+└── program
+    └── expr
+        ├── expr
+        │   └── term
+        │       └── factor
+        │           └── Terminal: '2'
+        ├── Terminal: '+'
+        └── term
+            ├── term
+            │   └── factor
+            │       └── Terminal: '3'
+            ├── Terminal: '*'
+            └── factor
+                ├── Terminal: '('
+                ├── expr
+                │   ├── expr
+                │   │   └── term
+                │   │       └── factor
+                │   │           └── Terminal: '4'
+                │   ├── Terminal: '-'
+                │   └── term
+                │       └── factor
+                │           └── Terminal: '5'
+                └── Terminal: ')'
+-> Total de nodos en el Parse Tree (CST): 25 nodos
+
+================================================================================
+[2] DIFERENTES FORMAS DE REPRESENTACIÓN DEL AST:
+================================================================================
+
+>>> FORMA 1: AST Jerárquico Orientado a Objetos (Visual 2D / Clases)
+    Los operadores son nodos internos; los operandos son nodos hoja.
+    Se eliminan nodos de paso intermediarios (E, T, F) y puntuación innecesaria.
+└── Op(+)
+    ├── Num(2)
+    └── Op(*)
+        ├── Num(3)
+        └── Op(-)
+            ├── Num(4)
+            └── Num(5)
+    -> Total de nodos en el AST: 7 nodos (Reducción del 72.0%)
+    -> Evaluación semántica del AST: -1
+
+>>> FORMA 2: AST en Notación Prefija / S-Expressions (Estilo Lisp) y Tuplas
+    Formato clásico en lenguajes funcionales e intérpretes teóricos:
+    - S-Expression : (+ 2 (* 3 (- 4 5)))
+    - Tuplas Python: ('+', 2, ('*', 3, ('-', 4, 5)))
+
+>>> FORMA 3: AST Estructurado en Diccionario / JSON (Estándar ESTree / Linters)
+    Estructura serializable utilizada en herramientas modernas de análisis estático:
+{
+  "type": "BinaryExpression",
+  "operator": "+",
+  "left": {
+    "type": "Literal",
+    "value": 2
+  },
+  "right": {
+    "type": "BinaryExpression",
+    "operator": "*",
+    "left": {
+      "type": "Literal",
+      "value": 3
+    },
+    "right": {
+      "type": "BinaryExpression",
+      "operator": "-",
+      "left": {
+        "type": "Literal",
+        "value": 4
+      },
+      "right": {
+        "type": "Literal",
+        "value": 5
+      }
+    }
+  }
+}
+
+>>> FORMA 4: AST N-Ario Compactado (Operadores homogéneos agrupados)
+    Representación en la que operaciones encadenadas se aplanan en un solo nodo:
+    - S-Expression N-Aria: (+ 2 (* 3 (- 4 5)))
+    - Árbol N-Ario:
+└── NaryOp(+)
+    ├── Num(2)
+    └── NaryOp(*)
+        ├── Num(3)
+        └── Op(-)
+            ├── Num(4)
+            └── Num(5)
+
+>>> FORMA 5: AST Nativo del compilador de Python (Módulo 'ast')
+    Representación que genera internamente CPython al compilar la misma expresión:
+    - ast.dump() estructurado:
+    Expression(
+  body=BinOp(
+    left=Constant(value=2),
+    op=Add(),
+    right=BinOp(
+      left=Constant(value=3),
+      op=Mult(),
+      right=BinOp(
+        left=Constant(value=4),
+        op=Sub(),
+        right=Constant(value=5)))))
+
+################################################################################
+
+================================================================================
+  ANÁLISIS COMPARATIVO CST vs FORMAS DE AST PARA: '1 + 2 + 3 + 4'
+  Diapositiva 12/42 - Lenguajes de Programación
+  Grupo 5: Andrés Sebastián Coral Vallejo y Carol Arenas Cardona
+================================================================================
+
+[1] PARSE TREE (Árbol Sintáctico Concreto - CST) tal como en Diapositiva 12:
+-------------------------------------------------------------------------
+Conserva la totalidad de pasos de derivación de la gramática (E -> T -> F):
+└── program
+    └── expr
+        ├── expr
+        │   ├── expr
+        │   │   ├── expr
+        │   │   │   └── term
+        │   │   │       └── factor
+        │   │   │           └── Terminal: '1'
+        │   │   ├── Terminal: '+'
+        │   │   └── term
+        │   │       └── factor
+        │   │           └── Terminal: '2'
+        │   ├── Terminal: '+'
+        │   └── term
+        │       └── factor
+        │           └── Terminal: '3'
+        ├── Terminal: '+'
+        └── term
+            └── factor
+                └── Terminal: '4'
+-> Total de nodos en el Parse Tree (CST): 21 nodos
+
+================================================================================
+[2] DIFERENTES FORMAS DE REPRESENTACIÓN DEL AST:
+================================================================================
+
+>>> FORMA 1: AST Jerárquico Orientado a Objetos (Visual 2D / Clases)
+    Los operadores son nodos internos; los operandos son nodos hoja.
+    Se eliminan nodos de paso intermediarios (E, T, F) y puntuación innecesaria.
+└── Op(+)
+    ├── Op(+)
+    │   ├── Op(+)
+    │   │   ├── Num(1)
+    │   │   └── Num(2)
+    │   └── Num(3)
+    └── Num(4)
+    -> Total de nodos en el AST: 7 nodos (Reducción del 66.7%)
+    -> Evaluación semántica del AST: 10
+
+>>> FORMA 2: AST en Notación Prefija / S-Expressions (Estilo Lisp) y Tuplas
+    Formato clásico en lenguajes funcionales e intérpretes teóricos:
+    - S-Expression : (+ (+ (+ 1 2) 3) 4)
+    - Tuplas Python: ('+', ('+', ('+', 1, 2), 3), 4)
+
+>>> FORMA 3: AST Estructurado en Diccionario / JSON (Estándar ESTree / Linters)
+    Estructura serializable utilizada en herramientas modernas de análisis estático:
+{
+  "type": "BinaryExpression",
+  "operator": "+",
+  "left": {
+    "type": "BinaryExpression",
+    "operator": "+",
+    "left": {
+      "type": "BinaryExpression",
+      "operator": "+",
+      "left": {
+        "type": "Literal",
+        "value": 1
+      },
+      "right": {
+        "type": "Literal",
+        "value": 2
+      }
+    },
+    "right": {
+      "type": "Literal",
+      "value": 3
+    }
+  },
+  "right": {
+    "type": "Literal",
+    "value": 4
+  }
+}
+
+>>> FORMA 4: AST N-Ario Compactado (Operadores homogéneos agrupados)
+    Representación en la que operaciones encadenadas se aplanan en un solo nodo:
+    - S-Expression N-Aria: (+ 1 2 3 4)
+    - Árbol N-Ario:
+└── NaryOp(+)
+    ├── Num(1)
+    ├── Num(2)
+    ├── Num(3)
+    └── Num(4)
+
+>>> FORMA 5: AST Nativo del compilador de Python (Módulo 'ast')
+    Representación que genera internamente CPython al compilar la misma expresión:
+    - ast.dump() estructurado:
+    Expression(
+  body=BinOp(
+    left=BinOp(
+      left=BinOp(
+        left=Constant(value=1),
+        op=Add(),
+        right=Constant(value=2)),
+      op=Add(),
+      right=Constant(value=3)),
+    op=Add(),
+    right=Constant(value=4)))

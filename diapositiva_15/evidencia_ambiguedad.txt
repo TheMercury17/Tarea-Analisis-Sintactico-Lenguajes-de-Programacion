@@ -1,0 +1,127 @@
+================================================================================
+  DEMOSTRACIÓN Y PRUEBAS DE AMBIGÜEDAD - DIAPOSITIVA 15/42
+  Lenguajes de Programación - Universidad Sergio Arboleda
+  Grupo 5: Andrés Sebastián Coral Vallejo y Carol Arenas Cardona
+================================================================================
+
+Cadena de prueba analizada: '2 + 3 * 4'
+
+================================================================================
+1. DEMOSTRACIÓN TEÓRICA FORMAL DE AMBIGÜEDAD
+================================================================================
+Definición: Una gramática independiente del contexto G es AMBIGUA si existe al
+menos una cadena w en L(G) para la cual se pueden construir dos o más árboles
+de derivación distintos (o dos derivaciones más a la izquierda distintas).
+
+Gramática de la Diapositiva 15:
+    E -> E + E
+    E -> E * E
+    E -> num
+
+Para la cadena '2 + 3 * 4', existen DOS derivaciones más a la izquierda válidas:
+
+--- Derivación A (Prioridad a la Suma / Multiplicación en la raíz) ---
+    E => E * E
+      => (E + E) * E
+      => (2 + E) * E
+      => (2 + 3) * E
+      => (2 + 3) * 4
+    Árbol de Derivación A:
+           E (*)
+          /     \
+        E (+)    E (4)
+       /     \
+     E (2)   E (3)
+    Interpretación Semántica: (2 + 3) * 4 = 20
+
+--- Derivación B (Prioridad a la Multiplicación / Suma en la raíz) ---
+    E => E + E
+      => 2 + E
+      => 2 + (E * E)
+      => 2 + (3 * E)
+      => 2 + (3 * 4)
+    Árbol de Derivación B:
+           E (+)
+          /     \
+     E (2)       E (*)
+                /     \
+              E (3)   E (4)
+    Interpretación Semántica: 2 + (3 * 4) = 14
+
+>> Conclusión Teórica: La existencia de los Árboles A y B para la misma cadena
+   demuestra matemática y formalmente que la gramática es AMBIGUA.
+
+================================================================================
+2. IMPLEMENTACIÓN Y COMPROBACIÓN EN ANTLR 4
+================================================================================
+¿Qué hace ANTLR 4 cuando se le suministra una gramática formalmente ambigua?
+ANTLR 4 no falla ni se detiene; en su lugar, aplica una heurística determinista:
+1. Precedencia de regla (Alternative Precedence): la primera alternativa listada
+   en el archivo .g4 tiene mayor precedencia.
+2. Asociatividad por la izquierda por defecto.
+
+-------------------------------------------------------------------------
+EXPERIMENTO 1: Gramática 'AmbiguousExpr.g4' (Regla '+' antes de '*')
+-------------------------------------------------------------------------
+Parse Tree generado por ANTLR:
+└── program
+    └── expr
+        ├── expr
+        │   ├── expr
+        │   │   └── Terminal: '2'
+        │   ├── Terminal: '+'
+        │   └── expr
+        │       └── Terminal: '3'
+        ├── Terminal: '*'
+        └── expr
+            └── Terminal: '4'
+Representación en S-Expression: (program (expr (expr (expr 2) + (expr 3)) * (expr 4)) <EOF>)
+Valor numérico evaluado        : 20
+Explicación: Dado que 'expr + expr' fue declarado primero en la regla, ANTLR
+le otorgó prioridad a la suma, agrupando la expresión como (2 + 3) * 4 = 20.
+¡Este resultado contradice la precedencia matemática estándar!
+
+-------------------------------------------------------------------------
+EXPERIMENTO 2: Gramática 'AmbiguousExprReversed.g4' (Regla '*' antes de '+')
+-------------------------------------------------------------------------
+Parse Tree generado por ANTLR:
+└── program
+    └── expr
+        ├── expr
+        │   └── Terminal: '2'
+        ├── Terminal: '+'
+        └── expr
+            ├── expr
+            │   └── Terminal: '3'
+            ├── Terminal: '*'
+            └── expr
+                └── Terminal: '4'
+Representación en S-Expression: (program (expr (expr 2) + (expr (expr 3) * (expr 4))) <EOF>)
+Valor numérico evaluado        : 14
+Explicación: Al simplemente intercambiar el orden físico de las dos líneas en
+el archivo .g4, ANTLR cambia el árbol por completo a 2 + (3 * 4) = 14.
+
+================================================================================
+3. CONTRASTE: DESAMBIGUACIÓN ESTRUCTURAL (DIAPOSITIVA 11)
+================================================================================
+Para eliminar la ambigüedad en la teoría de compiladores, se estratifica la
+gramática en niveles jerárquicos de no terminales (E para suma, T para producto,
+F para factores atómicos):
+    E -> E + T | T
+    T -> T * F | F
+    F -> num
+Resultado en la gramática de la Diapositiva 11: 14
+El árbol producido es único e independiente del orden en que se listen las reglas,
+porque la precedencia está codificada directamente en la estructura del lenguaje.
+
+================================================================================
+4. CUADRO COMPARATIVO FINAL: PRUEBA DE AMBIGÜEDAD
+================================================================================
+Configuración                       | Árbol / Agrupación   | Resultado  | ¿Es Ambigua?
+--------------------------------------------------------------------------------
+Teoría: Derivación A                | ((2 + 3) * 4)        | 20         | SÍ (Árbol 1)
+Teoría: Derivación B                | (2 + (3 * 4))        | 14         | SÍ (Árbol 2)
+ANTLR: AmbiguousExpr (+ primero)    | ((2 + 3) * 4)        | 20         | SÍ (Forzado por orden)
+ANTLR: AmbiguousExprReversed (*)    | (2 + (3 * 4))        | 14         | SÍ (Forzado por orden)
+Gramática Diapositiva 11 (E,T,F)    | (2 + (3 * 4))        | 14         | NO (Estratificada)
+================================================================================
